@@ -5,7 +5,6 @@ API_KEYS = ["KEY1","KEY2"]
 
 domain = sys.argv[1]
 query = f"SELECT domain.hostname FROM hosts WHERE domain.hostname LIKE '%.{domain}'"
-# {"query":"SELECT domain.hostname FROM hosts WHERE domain.hostname LIKE '%.cloudapps.cisco.com'"}
 
 def write_results(records):
     filename = f"{domain}.results.txt"
