@@ -1,13 +1,24 @@
 import requests
-import sys,json
+import json
+from sys import argv
+from os import environ
 # API Key
-API_KEYS = ["KEY1","KEY2"]
+API_KEY = environ.get("sectrails_key",None)
 
-domain = sys.argv[1]
-query = f"SELECT domain.hostname FROM hosts WHERE domain.hostname LIKE '%.{domain}'"
+def check_key():
+    if not API_KEY:
+        print("No valid API key")
+        exit()
+
+if len(argv) < 2:
+    print(f"""USAGE:
+          {argv[0]} <domain>""")
+    exit()
+    
+query = f"SELECT domain.hostname FROM hosts WHERE domain.hostname LIKE '%.{argv[1]}'"
 
 def write_results(records):
-    filename = f"{domain}.results.txt"
+    filename = f"{argv[1]}.results.txt"
     with open(filename, "a", encoding="utf-8") as output_file:
         for record in records:
             hostname = record["domain"]["hostname"]
@@ -15,22 +26,13 @@ def write_results(records):
                 output_file.write(hostname + "\n")
 
 
-def get_api_key():
-    #print("[+] Gettting a Working API Key")
-    for api_key in API_KEYS:
-        req = requests.get(f"https://api.securitytrails.com/v1/ping?apikey={api_key}", headers={"Accept":"application/json"})
-        if req.status_code == 200:
-           return api_key
-    print("No Valid API key")
-    exit()
-
 
 def first_request():
-    api_key = get_api_key()
+    check_key()
     print("[+] Sending First Request")
     url = "https://api.securitytrails.com/v1/query/scroll/"
     headers = {
-            "APIKEY": api_key,
+            "APIKEY": API_KEY,
             "Content-Type": "application/json"
     }
     data = {
@@ -51,14 +53,14 @@ def first_request():
 # subdomains => "SELECT domain.hostname FROM hosts WHERE domain.apex='example.com'"
 # conpany domains => "SELECT domain.apex FROM hosts WHERE organization.name='Example Org'"
 def fetch():
+    check_key()
     scrol_id = first_request()
     num = 2
     while scrol_id:
-        api_key = get_api_key()
         url= "https://api.securitytrails.com/v1/query/scroll/" + scrol_id
         print(f"Fetch Request Number: {num}, Send To: {url}")
         headers = {
-            "APIKEY": api_key,
+            "APIKEY": API_KEY,
             "Content-Type": "application/json"
         }
         
